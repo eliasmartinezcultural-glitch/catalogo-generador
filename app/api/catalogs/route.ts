@@ -1,5 +1,5 @@
-import { put } from "@vercel/blob";
 import { NextResponse } from "next/server";
+import { saveCatalog } from "../../../lib/catalog-store";
 import { normalizeCatalog, slugify } from "../../../lib/catalog";
 
 export const runtime = "nodejs";
@@ -24,15 +24,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Agregá al menos un producto o servicio." }, { status: 400 });
     }
 
+    // Un único Blob Store conectado al proyecto sirve para todos los catálogos.
+    // Cada publicación obtiene automáticamente su propio identificador/archivo.
     const slug = `${slugify(catalog.business)}-${crypto.randomUUID().slice(0, 8)}`;
-    const payload = JSON.stringify({ ...catalog, publishedAt: new Date().toISOString(), slug });
-
-    const blob = await put(`catalogs/${slug}.json`, payload, {
-      access: "public",
-      addRandomSuffix: false,
-      contentType: "application/json; charset=utf-8",
-      cacheControlMaxAge: 60,
-    });
+    const blob = await saveCatalog(slug, catalog);
 
     return NextResponse.json({ slug, url: `/c/${slug}`, blobUrl: blob.url });
   } catch (error) {
