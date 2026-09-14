@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { headers } from "next/headers";
 import type { CSSProperties } from "react";
 import { cache } from "react";
 import { instagramUsername, safeExternalUrl, whatsappPhone } from "../../../lib/catalog";
@@ -38,12 +39,15 @@ export default async function PublicCatalog({ params }: { params: Promise<{ slug
   const c = await getCatalog(slug);
   if (!c) notFound();
 
+  const requestHeaders = await headers();
+  const host = requestHeaders.get("x-forwarded-host") || requestHeaders.get("host") || "localhost:3000";
+  const protocol = requestHeaders.get("x-forwarded-proto") || "https";
+  const shareUrl = `${protocol}://${host}/c/${slug}`;
+  const shareText = `Mirá el catálogo de ${c.business}: ${shareUrl}`;
   const wa = whatsappPhone(c.whatsapp);
   const ig = instagramUsername(c.instagram);
   const web = safeExternalUrl(c.website);
   const cats = Array.from(new Set(c.items.map(x => (x.category || "").trim() || "General")));
-  const shareUrl = `/c/${slug}`;
-  const shareText = `Mirá el catálogo de ${c.business}: ${shareUrl}`;
 
   return <main className={`public-page ${c.template}`} style={{ "--primary": c.primary, "--secondary": c.secondary } as CSSProperties}>
     <article className="public-catalog">
