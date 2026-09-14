@@ -2,7 +2,7 @@
 
 import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
-import { Catalog as CatalogType, Item, MAX_ITEMS, instagramUsername, safeExternalUrl, whatsappPhone } from "../lib/catalog";
+import { Item, Catalog as CatalogType, MAX_ITEMS, instagramUsername, safeExternalUrl, whatsappPhone } from "../lib/catalog";
 
 type Catalog = CatalogType;
 const starter:Catalog={business:"Tu negocio",subtitle:"Catálogo digital",description:"Presentá tus productos o servicios de forma clara, profesional y lista para compartir.",logo:"",phone:"",whatsapp:"",instagram:"",website:"",location:"",primary:"#172033",secondary:"#f5f3ee",template:"elegante",items:[{id:"1",name:"Producto destacado",description:"Descripción comercial breve y concreta.",price:"$ 0",category:"Destacados",image:"",tag:"Nuevo"},{id:"2",name:"Servicio profesional",description:"Explicá qué incluye y por qué conviene contratarlo.",price:"Consultar",category:"Servicios",image:"",tag:"Recomendado"}]};
