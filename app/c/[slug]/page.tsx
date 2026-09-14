@@ -1,25 +1,13 @@
-import { list } from "@vercel/blob";
 import { notFound } from "next/navigation";
 import type { CSSProperties } from "react";
 import { cache } from "react";
-import { instagramUsername, normalizeCatalog, safeExternalUrl, whatsappPhone } from "../../../lib/catalog";
+import { instagramUsername, safeExternalUrl, whatsappPhone } from "../../../lib/catalog";
+import { readCatalog } from "../../../lib/catalog-store";
 import type { Catalog } from "../../../lib/catalog";
 
 export const dynamic = "force-dynamic";
 
-const getCatalog = cache(async (slug: string): Promise<Catalog | null> => {
-  try {
-    const result = await list({ prefix: `catalogs/${slug}.json`, limit: 1 });
-    const file = result.blobs[0];
-    if (!file) return null;
-    const response = await fetch(file.url, { cache: "no-store" });
-    if (!response.ok) return null;
-    return normalizeCatalog(await response.json());
-  } catch (error) {
-    console.error("catalog read error", error);
-    return null;
-  }
-});
+const getCatalog = cache(async (slug: string): Promise<Catalog | null> => readCatalog(slug));
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
