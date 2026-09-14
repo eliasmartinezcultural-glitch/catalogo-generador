@@ -1,15 +1,8 @@
 import { put } from "@vercel/blob";
 import { NextResponse } from "next/server";
+import { normalizeCatalog, slugify } from "../../../lib/catalog";
 
-function slugify(value: string) {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 48) || "catalogo";
-}
+export const runtime = "nodejs";
 
 function errorMessage(error: unknown) {
   if (error instanceof Error) return error.message;
@@ -19,12 +12,19 @@ function errorMessage(error: unknown) {
 
 export async function POST(request: Request) {
   try {
-    const catalog = await request.json();
-    if (!catalog?.business || !Array.isArray(catalog.items)) {
-      return NextResponse.json({ error: "Catálogo inválido" }, { status: 400 });
+    const input = await request.json();
+    const catalog = normalizeCatalog(input);
+    if (!catalog?.business) {
+      return NextResponse.json({ error: "Completá el nombre del negocio." }, { status: 400 });
+    }
+    if (!catalog.whatsapp.trim()) {
+      return NextResponse.json({ error: "Agregá un WhatsApp para que los clientes puedan consultar." }, { status: 400 });
+    }
+    if (!catalog.items.length) {
+      return NextResponse.json({ error: "Agregá al menos un producto o servicio." }, { status: 400 });
     }
 
-    const slug = `${slugify(String(catalog.business))}-${crypto.randomUUID().slice(0, 8)}`;
+    const slug = `${slugify(catalog.business)}-${crypto.randomUUID().slice(0, 8)}`;
     const payload = JSON.stringify({ ...catalog, publishedAt: new Date().toISOString(), slug });
 
     const blob = await put(`catalogs/${slug}.json`, payload, {
@@ -38,9 +38,6 @@ export async function POST(request: Request) {
   } catch (error) {
     const detail = errorMessage(error);
     console.error("catalog publish error", detail, error);
-    return NextResponse.json({
-      error: "No se pudo publicar el catálogo.",
-      detail,
-    }, { status: 500 });
+    return NextResponse.json({ error: "No se pudo publicar el catálogo.", detail }, { status: 500 });
   }
 }
