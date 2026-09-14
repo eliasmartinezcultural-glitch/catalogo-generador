@@ -1,141 +1,40 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { ChangeEvent, useEffect, useMemo, useState } from "react";
 
-type Product = { id: string; name: string; description: string; price: string; category: string; image: string; tag: string };
-type Catalog = {
-  business: string; subtitle: string; description: string; logo: string;
-  phone: string; whatsapp: string; instagram: string; website: string; location: string;
-  primary: string; secondary: string; template: "elegante" | "comercial" | "minimal";
-  products: Product[];
-};
+type Item = { id:string; name:string; description:string; price:string; category:string; image:string; tag:string };
+type Catalog = { business:string; subtitle:string; description:string; logo:string; phone:string; whatsapp:string; instagram:string; website:string; location:string; primary:string; secondary:string; template:"elegante"|"comercial"|"minimal"; items:Item[] };
 
-const starter: Catalog = {
-  business: "Tu negocio", subtitle: "Catálogo digital", description: "Presentá tus productos o servicios de forma clara, profesional y lista para compartir.", logo: "",
-  phone: "", whatsapp: "", instagram: "", website: "", location: "", primary: "#111827", secondary: "#f4f5f7", template: "elegante",
-  products: [
-    { id: "1", name: "Producto destacado", description: "Descripción breve y comercial del producto.", price: "$ 0", category: "Destacados", image: "", tag: "Nuevo" },
-    { id: "2", name: "Servicio profesional", description: "Explicá qué incluye y por qué conviene contratarlo.", price: "Consultar", category: "Servicios", image: "", tag: "Recomendado" },
-  ],
-};
+const starter:Catalog={business:"Tu negocio",subtitle:"Catálogo digital",description:"Presentá tus productos o servicios de forma clara, profesional y lista para compartir.",logo:"",phone:"",whatsapp:"",instagram:"",website:"",location:"",primary:"#172033",secondary:"#f5f3ee",template:"elegante",items:[{id:"1",name:"Producto destacado",description:"Descripción comercial breve y concreta.",price:"$ 0",category:"Destacados",image:"",tag:"Nuevo"},{id:"2",name:"Servicio profesional",description:"Explicá qué incluye y por qué conviene contratarlo.",price:"Consultar",category:"Servicios",image:"",tag:"Recomendado"}]};
+const KEY="catalogo-studio-v2";
+const uid=()=>crypto.randomUUID?.()||Math.random().toString(36).slice(2);
+const cleanPhone=(v:string)=>v.replace(/[^\d]/g,"");
 
-function uid() { return Math.random().toString(36).slice(2, 10); }
-function cleanPhone(value: string) { return value.replace(/[^0-9]/g, ""); }
-function normalizeUrl(value: string) { if (!value) return ""; return /^https?:\/\//i.test(value) ? value : `https://${value}`; }
-
-export default function Home() {
-  const [catalog, setCatalog] = useState<Catalog>(starter);
-  const [saved, setSaved] = useState(false);
-  const [activeSection, setActiveSection] = useState<"identity" | "contact" | "style" | "items">("identity");
-
-  useEffect(() => {
-    const raw = localStorage.getItem("catalogo-studio-v2");
-    if (raw) { try { setCatalog({ ...starter, ...JSON.parse(raw) }); } catch {} }
-  }, []);
-
-  const categories = useMemo(() => Array.from(new Set(catalog.products.map(p => p.category.trim() || "General"))), [catalog.products]);
-  function patch(patch: Partial<Catalog>) { setCatalog(prev => ({ ...prev, ...patch })); setSaved(false); }
-  function updateProduct(id: string, patchProduct: Partial<Product>) { setCatalog(prev => ({ ...prev, products: prev.products.map(p => p.id === id ? { ...p, ...patchProduct } : p) })); setSaved(false); }
-  function addProduct() { setCatalog(prev => ({ ...prev, products: [...prev.products, { id: uid(), name: "Nuevo ítem", description: "Agregá una descripción comercial.", price: "Consultar", category: "General", image: "", tag: "" }] })); setActiveSection("items"); setSaved(false); }
-  function duplicateProduct(id: string) { setCatalog(prev => { const i = prev.products.findIndex(p => p.id === id); if (i < 0) return prev; const copy = { ...prev.products[i], id: uid(), name: `${prev.products[i].name} (copia)` }; const products = [...prev.products]; products.splice(i + 1, 0, copy); return { ...prev, products }; }); setSaved(false); }
-  function moveProduct(id: string, direction: -1 | 1) { setCatalog(prev => { const i = prev.products.findIndex(p => p.id === id), j = i + direction; if (i < 0 || j < 0 || j >= prev.products.length) return prev; const products = [...prev.products]; [products[i], products[j]] = [products[j], products[i]]; return { ...prev, products }; }); setSaved(false); }
-  function removeProduct(id: string) { setCatalog(prev => ({ ...prev, products: prev.products.filter(p => p.id !== id) })); setSaved(false); }
-  function save() { localStorage.setItem("catalogo-studio-v2", JSON.stringify(catalog)); setSaved(true); }
-  function reset() { if (confirm("¿Restaurar el catálogo inicial? Se perderán los cambios locales.")) { setCatalog(starter); localStorage.removeItem("catalogo-studio-v2"); setSaved(false); } }
-  function exportJson() { const blob = new Blob([JSON.stringify(catalog, null, 2)], { type: "application/json" }); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = `${(catalog.business || "catalogo").toLowerCase().replace(/[^a-z0-9]+/g, "-")}.json`; a.click(); URL.revokeObjectURL(url); }
-  function importJson(file: File) { const reader = new FileReader(); reader.onload = () => { try { const data = JSON.parse(String(reader.result)); if (!Array.isArray(data.products)) throw new Error(); setCatalog({ ...starter, ...data }); setSaved(false); } catch { alert("El archivo no contiene un catálogo válido."); } }; reader.readAsText(file); }
-
-  return <div className="shell">
-    <header className="topbar">
-      <div className="brand"><div className="brand-mark">CS</div><div><strong>Catálogo Studio</strong><small>Constructor profesional</small></div></div>
-      <div className="top-actions">
-        <button className="btn btn-ghost hide-mobile" onClick={reset}>Restaurar</button>
-        <label className="btn btn-ghost hide-mobile">Importar<input hidden type="file" accept="application/json" onChange={e => e.target.files?.[0] && importJson(e.target.files[0])}/></label>
-        <button className="btn btn-ghost hide-mobile" onClick={exportJson}>Exportar</button>
-        <button className="btn btn-light" onClick={() => window.print()}>PDF / Imprimir</button>
-        <button className="btn btn-primary" onClick={save}>{saved ? "Guardado ✓" : "Guardar"}</button>
-      </div>
-    </header>
-
-    <main className="workspace">
-      <aside className="sidebar">
-        <div className="builder-head"><div><h1>Crear catálogo</h1><p>Completá los datos y mirá el resultado a la derecha.</p></div><span className="status-dot">●</span></div>
-        <nav className="builder-nav">
-          <button className={activeSection === "identity" ? "active" : ""} onClick={() => setActiveSection("identity")}>01 <span>Identidad</span></button>
-          <button className={activeSection === "contact" ? "active" : ""} onClick={() => setActiveSection("contact")}>02 <span>Contacto</span></button>
-          <button className={activeSection === "style" ? "active" : ""} onClick={() => setActiveSection("style")}>03 <span>Diseño</span></button>
-          <button className={activeSection === "items" ? "active" : ""} onClick={() => setActiveSection("items")}>04 <span>Productos</span><b>{catalog.products.length}</b></button>
-        </nav>
-
-        {activeSection === "identity" && <Panel title="Identidad del catálogo">
-          <Field label="Nombre del negocio"><input autoFocus value={catalog.business} onChange={e => patch({ business: e.target.value })}/></Field>
-          <Field label="Bajada / especialidad"><input value={catalog.subtitle} onChange={e => patch({ subtitle: e.target.value })}/></Field>
-          <Field label="Presentación"><textarea value={catalog.description} onChange={e => patch({ description: e.target.value })}/></Field>
-          <Field label="Logo · URL de imagen"><input placeholder="https://..." value={catalog.logo} onChange={e => patch({ logo: e.target.value })}/></Field>
-          <p className="hint">Si no tenés logo, dejalo vacío. El catálogo funciona igual.</p>
-        </Panel>}
-
-        {activeSection === "contact" && <Panel title="Datos de contacto">
-          <Field label="WhatsApp"><input placeholder="299 123 4567" value={catalog.whatsapp} onChange={e => patch({ whatsapp: e.target.value })}/></Field>
-          <Field label="Teléfono"><input placeholder="299 123 4567" value={catalog.phone} onChange={e => patch({ phone: e.target.value })}/></Field>
-          <Field label="Instagram"><input placeholder="@tuemprendimiento" value={catalog.instagram} onChange={e => patch({ instagram: e.target.value })}/></Field>
-          <Field label="Sitio web"><input placeholder="www.tusitio.com" value={catalog.website} onChange={e => patch({ website: e.target.value })}/></Field>
-          <Field label="Ubicación"><input placeholder="San Patricio del Chañar, Neuquén" value={catalog.location} onChange={e => patch({ location: e.target.value })}/></Field>
-          <p className="hint">Los datos cargados se convierten en botones reales en la vista previa.</p>
-        </Panel>}
-
-        {activeSection === "style" && <Panel title="Identidad visual">
-          <Field label="Plantilla"><div className="template-grid">{(["elegante","comercial","minimal"] as const).map(t => <button key={t} className={catalog.template === t ? "template active" : "template"} onClick={() => patch({ template: t })}><span className={`template-sample ${t}`}></span><strong>{t[0].toUpperCase()+t.slice(1)}</strong></button>)}</div></Field>
-          <div className="color-row"><Field label="Color principal"><input className="color-input" type="color" value={catalog.primary} onChange={e => patch({ primary: e.target.value })}/></Field><Field label="Fondo"><input className="color-input" type="color" value={catalog.secondary} onChange={e => patch({ secondary: e.target.value })}/></Field></div>
-          <button className="btn btn-wide" onClick={() => patch({ primary: starter.primary, secondary: starter.secondary, template: "elegante" })}>Restaurar diseño base</button>
-        </Panel>}
-
-        {activeSection === "items" && <Panel title="Productos y servicios" subtitle={`${catalog.products.length} ítems · ${categories.length} categorías`}>
-          {catalog.products.map((p, i) => <ProductEditor key={p.id} product={p} index={i} total={catalog.products.length} onChange={v => updateProduct(p.id, v)} onRemove={() => removeProduct(p.id)} onDuplicate={() => duplicateProduct(p.id)} onMove={d => moveProduct(p.id, d)}/>)}
-          <button className="btn btn-primary btn-wide" onClick={addProduct}>+ Agregar producto o servicio</button>
-        </Panel>}
-      </aside>
-
-      <section className="preview-area">
-        <div className="preview-toolbar"><div><strong>VISTA PREVIA</strong><span> · {catalog.template}</span></div><span>{catalog.products.length} ítems · actualización instantánea</span></div>
-        <CatalogPreview catalog={catalog} categories={categories}/>
-      </section>
-    </main>
-  </div>;
+export default function Home(){
+ const [c,setC]=useState<Catalog>(starter); const [saved,setSaved]=useState(false); const [notice,setNotice]=useState("");
+ useEffect(()=>{try{const x=localStorage.getItem(KEY);if(x)setC(JSON.parse(x));}catch{}},[]);
+ const cats=useMemo(()=>Array.from(new Set(c.items.map(x=>x.category.trim()||"General"))),[c.items]);
+ const patch=(p:Partial<Catalog>)=>{setC(x=>({...x,...p}));setSaved(false)};
+ const update=(id:string,p:Partial<Item>)=>{setC(x=>({...x,items:x.items.map(i=>i.id===id?{...i,...p}:i)}));setSaved(false)};
+ const add=()=>{setC(x=>({...x,items:[...x.items,{id:uid(),name:"Nuevo producto",description:"Descripción comercial",price:"Consultar",category:"General",image:"",tag:""}]}));setSaved(false)};
+ const duplicate=(id:string)=>{setC(x=>{const i=x.items.find(y=>y.id===id);if(!i)return x;const n={...i,id:uid(),name:i.name+" (copia)"};const a=[...x.items];a.splice(a.findIndex(y=>y.id===id)+1,0,n);return {...x,items:a}});setSaved(false)};
+ const move=(id:string,d:number)=>{setC(x=>{const a=[...x.items],i=a.findIndex(y=>y.id===id),j=i+d;if(i<0||j<0||j>=a.length)return x;[a[i],a[j]]=[a[j],a[i]];return {...x,items:a}});setSaved(false)};
+ const remove=(id:string)=>{setC(x=>({...x,items:x.items.filter(i=>i.id!==id)}));setSaved(false)};
+ const save=()=>{localStorage.setItem(KEY,JSON.stringify(c));setSaved(true);setNotice("Catálogo guardado en este dispositivo")};
+ const reset=()=>{if(confirm("¿Restaurar el catálogo inicial?")){setC(starter);localStorage.removeItem(KEY);setSaved(false)}};
+ const exportJson=()=>{const a=document.createElement("a"),u=URL.createObjectURL(new Blob([JSON.stringify(c,null,2)],{type:"application/json"}));a.href=u;a.download=(c.business||"catalogo").toLowerCase().replace(/[^a-z0-9]+/g,"-")+".json";a.click();URL.revokeObjectURL(u)};
+ const importJson=(e:ChangeEvent<HTMLInputElement>)=>{const f=e.target.files?.[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const x=JSON.parse(String(r.result));if(!x.business||!Array.isArray(x.items))throw 0;setC({...starter,...x});setSaved(false);setNotice("Catálogo importado correctamente")}catch{setNotice("Archivo inválido")}};r.readAsText(f)};
+ return <div className="app"><header className="top"><div className="brand"><b>CS</b><strong>Catálogo Studio</strong><span>Constructor profesional</span></div><div className="actions"><button onClick={reset}>Restaurar</button><label>Importar<input hidden type="file" accept="application/json" onChange={importJson}/></label><button onClick={exportJson}>Exportar</button><button onClick={()=>window.print()}>PDF / Imprimir</button><button className="primary" onClick={save}>{saved?"Guardado ✓":"Guardar"}</button></div></header>
+ <div className="workspace"><aside className="panel"><div className="panel-head"><div><small>PROYECTO ACTIVO</small><h1>Construí tu catálogo</h1></div><span className="status">● EDITABLE</span></div>
+ <div className="progress"><span style={{width:`${Math.min(100,25+(c.items.length>0?35:0)+(c.business!==starter.business?20:0)+(c.whatsapp||c.phone?20:0))}%`}}/></div>
+ <Section title="01 · Identidad"><Field label="Nombre del negocio"><input value={c.business} onChange={e=>patch({business:e.target.value})}/></Field><Field label="Bajada"><input value={c.subtitle} onChange={e=>patch({subtitle:e.target.value})}/></Field><Field label="Descripción"><textarea value={c.description} onChange={e=>patch({description:e.target.value})}/></Field><Field label="Logo (URL opcional)"><input placeholder="https://..." value={c.logo} onChange={e=>patch({logo:e.target.value})}/></Field></Section>
+ <Section title="02 · Contacto"><Field label="WhatsApp"><input placeholder="299 1234567" value={c.whatsapp} onChange={e=>patch({whatsapp:e.target.value})}/></Field><Field label="Teléfono"><input value={c.phone} onChange={e=>patch({phone:e.target.value})}/></Field><Field label="Instagram"><input placeholder="@tuusuario" value={c.instagram} onChange={e=>patch({instagram:e.target.value})}/></Field><Field label="Sitio web"><input placeholder="https://tusitio.com" value={c.website} onChange={e=>patch({website:e.target.value})}/></Field><Field label="Ubicación"><input value={c.location} onChange={e=>patch({location:e.target.value})}/></Field></Section>
+ <Section title="03 · Diseño"><div className="templates">{(["elegante","comercial","minimal"] as const).map(t=><button key={t} className={c.template===t?"selected":""} onClick={()=>patch({template:t})}><i className={`swatch ${t}`}/>{t}</button>)}</div><div className="colors"><Field label="Principal"><input type="color" value={c.primary} onChange={e=>patch({primary:e.target.value})}/></Field><Field label="Fondo"><input type="color" value={c.secondary} onChange={e=>patch({secondary:e.target.value})}/></Field></div></Section>
+ <Section title={`04 · Contenido · ${c.items.length} ítems`}>{c.items.map((i,n)=><div className="item" key={i.id}><div className="itembar"><b>{String(n+1).padStart(2,"0")} · {i.name||"Sin nombre"}</b><div><button title="Subir" onClick={()=>move(i.id,-1)}>↑</button><button title="Bajar" onClick={()=>move(i.id,1)}>↓</button><button title="Duplicar" onClick={()=>duplicate(i.id)}>＋</button><button className="danger" onClick={()=>remove(i.id)}>×</button></div></div><Field label="Nombre"><input value={i.name} onChange={e=>update(i.id,{name:e.target.value})}/></Field><Field label="Categoría"><input value={i.category} onChange={e=>update(i.id,{category:e.target.value})}/></Field><Field label="Descripción"><textarea value={i.description} onChange={e=>update(i.id,{description:e.target.value})}/></Field><div className="two"><Field label="Precio / modalidad"><input value={i.price} onChange={e=>update(i.id,{price:e.target.value})}/></Field><Field label="Etiqueta"><input value={i.tag} placeholder="Oferta" onChange={e=>update(i.id,{tag:e.target.value})}/></Field></div><Field label="Imagen (URL)"><input placeholder="https://..." value={i.image} onChange={e=>update(i.id,{image:e.target.value})}/></Field></div>)}<button className="add" onClick={add}>＋ Agregar producto o servicio</button></Section>
+ <div className="locked">✓ Estructura consolidada · guardado local · exportación JSON · PDF</div></aside>
+ <main className="preview"><div className="preview-head"><span>VISTA PREVIA EN TIEMPO REAL</span><span>{c.items.length} ítems · {cats.length} categorías</span></div><Catalog c={c} cats={cats}/>{notice&&<div className="toast" onClick={()=>setNotice("")}>{notice}</div>}</main></div></div>
 }
-
-function Panel({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) { return <div className="panel"><div className="panel-title"><div><h2>{title}</h2>{subtitle && <span>{subtitle}</span>}</div></div>{children}</div>; }
-function Field({ label, children }: { label: string; children: React.ReactNode }) { return <div className="field"><label>{label}</label>{children}</div>; }
-
-function ProductEditor({ product, index, total, onChange, onRemove, onDuplicate, onMove }: { product: Product; index: number; total: number; onChange: (p: Partial<Product>) => void; onRemove: () => void; onDuplicate: () => void; onMove: (d: -1 | 1) => void }) {
-  return <div className="item">
-    <div className="item-head"><div className="item-number">{String(index + 1).padStart(2,"0")}</div><div className="item-summary"><strong>{product.name || "Sin nombre"}</strong><span>{product.category || "General"} · {product.price || "Consultar"}</span></div><div className="item-actions"><button title="Subir" disabled={index===0} onClick={() => onMove(-1)}>↑</button><button title="Bajar" disabled={index===total-1} onClick={() => onMove(1)}>↓</button><button title="Duplicar" onClick={onDuplicate}>⧉</button><button className="danger" title="Eliminar" onClick={onRemove}>×</button></div></div>
-    <details><summary>Editar ítem</summary><div className="item-fields">
-      <Field label="Nombre"><input value={product.name} onChange={e => onChange({ name: e.target.value })}/></Field>
-      <div className="two"><Field label="Categoría"><input value={product.category} onChange={e => onChange({ category: e.target.value })}/></Field><Field label="Precio / modalidad"><input value={product.price} onChange={e => onChange({ price: e.target.value })}/></Field></div>
-      <Field label="Descripción"><textarea value={product.description} onChange={e => onChange({ description: e.target.value })}/></Field>
-      <div className="two"><Field label="Imagen · URL"><input placeholder="https://..." value={product.image} onChange={e => onChange({ image: e.target.value })}/></Field><Field label="Etiqueta"><input placeholder="Oferta / Nuevo" value={product.tag} onChange={e => onChange({ tag: e.target.value })}/></Field></div>
-    </div></details>
-  </div>;
-}
-
-function CatalogPreview({ catalog, categories }: { catalog: Catalog; categories: string[] }) {
-  const grouped = categories.map(category => ({ category, products: catalog.products.filter(p => (p.category.trim() || "General") === category) }));
-  const wa = cleanPhone(catalog.whatsapp);
-  return <article className={`catalog template-${catalog.template}`} style={{ ["--catalog-primary" as string]: catalog.primary, ["--catalog-secondary" as string]: catalog.secondary } as React.CSSProperties}>
-    <header className="catalog-header">
-      <div className="header-main">{catalog.logo && <img className="catalog-logo" src={normalizeUrl(catalog.logo)} alt="Logo"/>}<div className="catalog-kicker">{catalog.subtitle || "Catálogo digital"}</div><h2 className="catalog-title">{catalog.business || "Tu negocio"}</h2><p className="catalog-desc">{catalog.description}</p></div>
-      <div className="catalog-contact">
-        {wa && <a href={`https://wa.me/${wa}`} target="_blank" rel="noreferrer">WhatsApp</a>}
-        {catalog.phone && <a href={`tel:${cleanPhone(catalog.phone)}`}>Llamar</a>}
-        {catalog.instagram && <a href={`https://instagram.com/${catalog.instagram.replace(/^@/,"")}`} target="_blank" rel="noreferrer">Instagram</a>}
-        {catalog.website && <a href={normalizeUrl(catalog.website)} target="_blank" rel="noreferrer">Web</a>}
-        {catalog.location && <span>⌖ {catalog.location}</span>}
-      </div>
-    </header>
-    <div className="catalog-body">
-      {grouped.length ? grouped.map(group => <section className="category" key={group.category}><div className="category-head"><h3>{group.category}</h3><span>{group.products.length}</span></div><div className="product-grid">{group.products.map(p => <div className="product-card" key={p.id}><div className="product-image">{p.image ? <img src={normalizeUrl(p.image)} alt={p.name}/> : <div><span>Sin imagen</span></div>}{p.tag && <b className="tag">{p.tag}</b>}</div><div className="product-content"><h4>{p.name || "Producto"}</h4><p>{p.description || "Sin descripción."}</p><div className="product-bottom"><strong>{p.price || "Consultar"}</strong>{wa && <a className="mini-cta" href={`https://wa.me/${wa}?text=${encodeURIComponent(`Hola, quiero consultar por ${p.name}`)}`} target="_blank" rel="noreferrer">Consultar</a>}</div></div></div>)}</div></section>) : <div className="empty">Agregá tu primer producto o servicio desde el constructor.</div>}
-      <footer><strong>{catalog.business || "Tu negocio"}</strong><span>Catálogo digital · Información y contacto</span></footer>
-    </div>
-  </article>;
-}
+function Section({title,children}:{title:string;children:React.ReactNode}){return <section className="section"><h2>{title}</h2>{children}</section>}
+function Field({label,children}:{label:string;children:React.ReactNode}){return <label className="field"><span>{label}</span>{children}</label>}
+function Catalog({c,cats}:{c:Catalog;cats:string[]}){const wa=cleanPhone(c.whatsapp);const ig=c.instagram.replace(/^@/,"");const template=c.template;return <article className={`catalog ${template}`} style={{"--primary":c.primary,"--secondary":c.secondary} as React.CSSProperties}><header className="cover"><div className="cover-brand">{c.logo?<img src={c.logo} alt="Logo"/>:<span className="logo-fallback">{(c.business||"N").slice(0,1).toUpperCase()}</span>}<span>{c.subtitle||"Catálogo digital"}</span></div><div className="cover-copy"><small>CATÁLOGO · {new Date().getFullYear()}</small><h3>{c.business||"Tu negocio"}</h3><p>{c.description}</p></div><div className="contact"><Link href={wa?`https://wa.me/${wa}`:""} active={!!wa}>WhatsApp</Link><Link href={c.phone?`tel:${cleanPhone(c.phone)}`:""} active={!!c.phone}>Llamar</Link><Link href={ig?`https://instagram.com/${ig}`:""} active={!!ig}>Instagram</Link><Link href={c.website.startsWith("http")?c.website:c.website?`https://${c.website}`:""} active={!!c.website}>Web</Link>{c.location&&<span>{c.location}</span>}</div></header><div className="body">{cats.map(cat=><section className="cat" key={cat}><div className="cat-title"><span>{cat}</span><i/></div><div className="grid">{c.items.filter(i=>(i.category||"General").trim()===cat).map(i=><div className="card" key={i.id}><div className="image">{i.image?<img src={i.image} alt={i.name}/>:<span>{i.name.slice(0,1).toUpperCase()}</span>}</div><div className="card-body"><div className="tagline">{i.tag||""}</div><h4>{i.name||"Producto"}</h4><p>{i.description||"Sin descripción."}</p><div className="bottom"><strong>{i.price||"Consultar"}</strong>{wa&&<a href={`https://wa.me/${wa}?text=${encodeURIComponent(`Hola, consulto por ${i.name}`)}`} target="_blank">Consultar →</a>}</div></div></div>)}</div></section>)}{!c.items.length&&<div className="empty">Agregá el primer producto o servicio desde el constructor.</div>}<footer>{c.business||"Tu negocio"} · Catálogo digital · {c.website||c.phone||c.whatsapp||"Contacto disponible"}</footer></div></article>}
+function Link({href,active,children}:{href:string;active:boolean;children:React.ReactNode}){return active?<a href={href} target={href.startsWith("http")?"_blank":undefined} rel="noreferrer">{children}</a>:<span className="disabled">{children}</span>}
