@@ -2,7 +2,8 @@ import { list } from "@vercel/blob";
 import { notFound } from "next/navigation";
 import type { CSSProperties } from "react";
 import { cache } from "react";
-import { Catalog, normalizeCatalog, instagramUsername, safeExternalUrl, whatsappPhone } from "../../../lib/catalog";
+import { instagramUsername, normalizeCatalog, safeExternalUrl, whatsappPhone } from "../../../lib/catalog";
+import type { Catalog } from "../../../lib/catalog";
 
 export const dynamic = "force-dynamic";
 
