@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./catalog-pro.css";
+import "./catalog-pro-actions.css";
 
 export const metadata: Metadata = {
   title: "Catálogo Studio",
