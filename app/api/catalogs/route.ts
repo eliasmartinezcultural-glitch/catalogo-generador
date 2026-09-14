@@ -11,6 +11,12 @@ function slugify(value: string) {
     .slice(0, 48) || "catalogo";
 }
 
+function errorMessage(error: unknown) {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "string") return error;
+  try { return JSON.stringify(error); } catch { return "Error desconocido"; }
+}
+
 export async function POST(request: Request) {
   try {
     const catalog = await request.json();
@@ -30,7 +36,11 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ slug, url: `/c/${slug}`, blobUrl: blob.url });
   } catch (error) {
-    console.error("catalog publish error", error);
-    return NextResponse.json({ error: "No se pudo publicar. Verificá Vercel Blob." }, { status: 500 });
+    const detail = errorMessage(error);
+    console.error("catalog publish error", detail, error);
+    return NextResponse.json({
+      error: "No se pudo publicar el catálogo.",
+      detail,
+    }, { status: 500 });
   }
 }
