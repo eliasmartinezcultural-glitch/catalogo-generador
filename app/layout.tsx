@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import "./catalog-pro.css";
 import "./catalog-pro-actions.css";
+import "./catalog-editor-pro.css";
 
 export const metadata: Metadata = {
   title: "Catálogo Studio",
