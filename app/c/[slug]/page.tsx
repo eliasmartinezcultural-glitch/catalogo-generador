@@ -43,7 +43,7 @@ export default async function PublicCatalog({ params }: { params: Promise<{ slug
   const web = safeExternalUrl(c.website);
   const cats = Array.from(new Set(c.items.map(x => (x.category || "").trim() || "General")));
   const shareUrl = `/c/${slug}`;
-  const shareText = `Mirá el catálogo de ${c.business}`;
+  const shareText = `Mirá el catálogo de ${c.business}: ${shareUrl}`;
 
   return <main className={`public-page ${c.template}`} style={{ "--primary": c.primary, "--secondary": c.secondary } as CSSProperties}>
     <article className="public-catalog">
@@ -66,7 +66,7 @@ export default async function PublicCatalog({ params }: { params: Promise<{ slug
       <div className="public-body">
         <div className="share-strip">
           <span>Catálogo online · consultá directamente</span>
-          <button type="button" onClick={undefined} aria-label="Compartir catálogo">Compartir</button>
+          <a className="share-action" href={`https://wa.me/?text=${encodeURIComponent(shareText)}`} target="_blank" rel="noreferrer">Compartir por WhatsApp</a>
         </div>
         {cats.map(cat => <section className="public-category" key={cat}>
           <h2>{cat}</h2>
@@ -94,6 +94,6 @@ export default async function PublicCatalog({ params }: { params: Promise<{ slug
         {wa && <a href={`https://wa.me/${wa}`} target="_blank" rel="noreferrer">Consultar por WhatsApp</a>}
       </footer>
     </article>
-    {wa && <div className="mobile-contact"><a href={`https://wa.me/${wa}?text=${encodeURIComponent(`Hola, quiero consultar por el catálogo de ${c.business}.` )}`} target="_blank" rel="noreferrer">Consultar por WhatsApp</a></div>}
+    {wa && <div className="mobile-contact"><a href={`https://wa.me/${wa}?text=${encodeURIComponent(`Hola, quiero consultar por el catálogo de ${c.business}.`)}`} target="_blank" rel="noreferrer">Consultar por WhatsApp</a></div>}
   </main>;
 }
