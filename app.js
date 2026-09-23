@@ -1,6 +1,6 @@
 const KEY="catalogo-express.v1";
 const presets={almacen:{name:"Almacén",tag:"Productos ricos, atención cercana.",color:"#1f6b52",products:["Pan casero","Huevos","Mermelada artesanal"]},emprendimiento:{name:"Mi emprendimiento",tag:"Hecho con dedicación.",color:"#8b4f32",products:["Producto destacado","Producto especial"]},servicios:{name:"Mi servicio",tag:"Soluciones simples y profesionales.",color:"#315a8a",products:["Servicio principal","Servicio adicional"]}};
-const base=()=>({preset:"almacen",name:"",tag:"",phone:"",address:"San Patricio del Chañar",hours:"Lun a sáb · 9 a 20 hs",payment:"Efectivo · Transferencia",delivery:"Retiro en el local · Consultar envío",color:"#1f6b52",products:[]});
+const base=()=>({preset:"almacen",name:"Almacén La Esquina",tag:"Productos ricos, atención cercana.",phone:"",address:"San Patricio del Chañar",hours:"Lun a sáb · 9 a 20 hs",payment:"Efectivo · Transferencia",delivery:"Retiro en el local · Consultar envío",color:"#1f6b52",products:[{name:"Pan casero",price:"",description:"Hecho en el día.",emoji:"🥖"},{name:"Huevos",price:"",description:"Producto fresco.",emoji:"🥚"},{name:"Mermelada artesanal",price:"",description:"Preparación artesanal.",emoji:"🍓"}]});
 let state=load();
 function load(){try{return Object.assign(base(),JSON.parse(localStorage.getItem(KEY)||"{}"))}catch{return base()}}
 function save(){localStorage.setItem(KEY,JSON.stringify(state))}
