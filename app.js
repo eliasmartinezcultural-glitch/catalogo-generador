@@ -4,8 +4,12 @@ import {renderEditor,renderCatalog} from "./ui/render.js";
 import {validate} from "./core/validate.js";
 import {PRESETS,getPreset} from "./core/presets.js";
 import {compressImage} from "./core/media.js";
+import {library} from "./core/library.js";
+import {saveDraft} from "./core/factory.js";
 
 const $=s=>document.querySelector(s),store=createStore(),editor=$("#productEditor"),catalog=$("#catalog");
+let currentDraftId=localStorage.getItem("ocarina.factory.current")||"";
+let currentDraftName=localStorage.getItem("ocarina.factory.name")||"";
 const presetRoot=$("#presets");
 let syncing=false;
 
@@ -35,6 +39,7 @@ function syncForm(s){
   syncing=false;
   document.documentElement.style.setProperty("--accent",b.color);
 }
+function saveCurrent(s){ const saved=saveDraft(currentDraftName||s.business.name,s,currentDraftId); currentDraftId=saved.id; currentDraftName=saved.name; localStorage.setItem("ocarina.factory.current",currentDraftId); localStorage.setItem("ocarina.factory.name",currentDraftName); }
 function paint(s){
   syncForm(s);
   renderEditor(editor,s,{
@@ -48,7 +53,7 @@ function paint(s){
   $("#status").textContent=location.hash?"CATÁLOGO COMPARTIDO":"BORRADOR LOCAL";
   renderPresets();
 }
-store.subscribe(paint);
+store.subscribe(s=>{paint(s);if(!location.hash)saveCurrent(s)});
 
 presetRoot.onclick=e=>{const b=e.target.closest("[data-preset]");if(b)applyPreset(b.dataset.preset)};
 
