@@ -14,6 +14,18 @@ let currentClientId=localStorage.getItem("ocarina.factory.client")||"";
 let currentDraftName=localStorage.getItem("ocarina.factory.name")||"";
 let currentStatus=STATUS.DRAFT;
 let syncing=false,saveTimer=0;
+let editorSignature="";
+let forceEditorRender=false;
+
+function requestEditorRefresh(){forceEditorRender=true}
+
+function editorShapeSignature(s){
+  return [
+    currentDraftId,
+    s.products.length,
+    ...s.products.map(p=>[p.image||"",p.emoji||"",p.featured?"1":"0"].join("~"))
+  ].join("|");
+}
 
 function ensureContext(s){
   if(currentDraftId){
@@ -68,10 +80,12 @@ function renderPresets(){
   $("#presets").innerHTML=PRESETS.map(p=>`<button class="preset ${p.id===store.get().presetId?"active":""}" data-preset="${p.id}"><strong>${p.name}</strong><small>${p.desc}</small></button>`).join("");
 }
 function applyPreset(id){
+  requestEditorRefresh();
   const p=getPreset(id);
   store.patch(s=>{s.presetId=id;s.business.color=p.color;s.business.tag=p.tag;s.products=s.products.map((x,i)=>({...x,emoji:x.emoji||p.emojis[i%p.emojis.length]}));return s});
 }
-function syncForm(s){
+function syncForm(s,force=false){
+  if(!force && document.activeElement && $(".editor")?.contains(document.activeElement)) return;
   syncing=true;const b=s.business,a=s.appearance,c=client();
   $("#clientName").value=c?.name||b.name;$("#clientPhone").value=c?.phone||"";$("#clientNotes").value=c?.notes||"";
   $("#bizName").value=b.name;$("#bizTag").value=b.tag;$("#bizPhone").value=b.phone;$("#bizAddress").value=b.address;$("#bizColor").value=b.color;
@@ -80,13 +94,38 @@ function syncForm(s){
   syncing=false;document.documentElement.style.setProperty("--accent",b.color);
 }
 function paint(s){
-  ensureContext(s);syncForm(s);
-  renderEditor(editor,s,{edit:(i,k,v)=>store.patch(x=>{x.products[i][k]=v;return x}),remove:i=>store.patch(x=>{x.products.splice(i,1);return x}),photo:(i,v)=>store.patch(x=>{x.products[i].image=v;return x}),feature:i=>store.patch(x=>{x.products[i].featured=!x.products[i].featured;return x})});
-  renderCatalog(catalog,s);renderPresets();
-  $("#productCount").textContent=s.products.length+" productos";$("#draftName").textContent=currentDraftName||s.business.name||"Nuevo catálogo";
+  ensureContext(s);
+
+  // El editor no se reconstruye por cada tecla: solo cuando cambia su estructura.
+  const shape=editorShapeSignature(s);
+  const mustRefreshEditor=forceEditorRender || shape!==editorSignature;
+  if(mustRefreshEditor){
+    syncForm(s,true);
+    renderEditor(editor,s,{
+      edit:(i,k,v)=>store.patch(x=>{x.products[i][k]=v;return x}),
+      remove:i=>{requestEditorRefresh();store.patch(x=>{x.products.splice(i,1);return x})},
+      photo:(i,v)=>{requestEditorRefresh();store.patch(x=>{x.products[i].image=v;return x})},
+      feature:i=>{requestEditorRefresh();store.patch(x=>{x.products[i].featured=!x.products[i].featured;return x})}
+    });
+    editorSignature=shape;
+    forceEditorRender=false;
+  }
+
+  // El catálogo es una proyección independiente del estado y se actualiza siempre.
+  renderCatalog(catalog,s);
+  renderPresets();
+  $("#productCount").textContent=s.products.length+" productos";
+  $("#draftName").textContent=currentDraftName||s.business.name||"Nuevo catálogo";
+
   const label=STATUS_LABEL[currentStatus]||"BORRADOR",action=nextAction(currentStatus);
-  $("#status").textContent=label;$("#workflowLabel").textContent="● "+label;$("#workflowBtn").textContent=action.label;
-  $("#workflowHint").textContent=currentStatus===STATUS.DRAFT?"Producí y revisá. Al marcar Listo se valida y se guarda un checkpoint.":currentStatus===STATUS.READY?"Todo validado. Publicá cuando quieras para generar la publicación.":"Publicado. Si modificás algo, vuelve automáticamente a Borrador.";
+  $("#status").textContent=label;
+  $("#workflowLabel").textContent="● "+label;
+  $("#workflowBtn").textContent=action.label;
+  $("#workflowHint").textContent=currentStatus===STATUS.DRAFT
+    ?"Producí y revisá. Al marcar Listo se valida y se guarda un checkpoint."
+    :currentStatus===STATUS.READY
+      ?"Todo validado. Publicá cuando quieras para generar la publicación."
+      :"Publicado. Si modificás algo, vuelve automáticamente a Borrador.";
 }
 store.subscribe(s=>{paint(s);scheduleSave(s)});
 function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&#39;",'"':"&quot;","'":"&#39;"}[c]))}
@@ -97,21 +136,21 @@ $("#closeLibrary").onclick=()=>$("#libraryPanel").classList.remove("open");
 $("#librarySearch").oninput=renderLibrary;
 $("#libraryList").onclick=e=>{
   const open=e.target.closest("[data-open]"),hist=e.target.closest("[data-history]");
-  if(open){const d=factoryDB.getCatalog(open.dataset.open);if(!d)return;currentDraftId=d.id;currentClientId=d.clientId;currentDraftName=d.name;currentStatus=d.status;localStorage.setItem("ocarina.factory.current",currentDraftId);localStorage.setItem("ocarina.factory.client",currentClientId);localStorage.setItem("ocarina.factory.name",currentDraftName);location.hash="";store.set(d.state);$("#libraryPanel").classList.remove("open");show("Catálogo abierto")}
+  if(open){const d=factoryDB.getCatalog(open.dataset.open);if(!d)return;requestEditorRefresh();currentDraftId=d.id;currentClientId=d.clientId;currentDraftName=d.name;currentStatus=d.status;localStorage.setItem("ocarina.factory.current",currentDraftId);localStorage.setItem("ocarina.factory.client",currentClientId);localStorage.setItem("ocarina.factory.name",currentDraftName);location.hash="";store.set(d.state);$("#libraryPanel").classList.remove("open");show("Catálogo abierto")}
   if(hist)renderHistory(hist.dataset.history);
 };
 $("#closeHistory").onclick=()=>$("#historyPanel").classList.remove("open");
-$("#historyList").onclick=e=>{const b=e.target.closest("[data-restore]");if(!b)return;const d=factoryDB.restore(b.dataset.restore,Number(b.dataset.index));if(!d)return;currentDraftId=d.id;currentClientId=d.clientId;currentDraftName=d.name;currentStatus=d.status;localStorage.setItem("ocarina.factory.current",currentDraftId);localStorage.setItem("ocarina.factory.name",currentDraftName);store.set(d.state);$("#historyPanel").classList.remove("open");show("Versión restaurada")};
+$("#historyList").onclick=e=>{const b=e.target.closest("[data-restore]");if(!b)return;const d=factoryDB.restore(b.dataset.restore,Number(b.dataset.index));if(!d)return;requestEditorRefresh();currentDraftId=d.id;currentClientId=d.clientId;currentDraftName=d.name;currentStatus=d.status;localStorage.setItem("ocarina.factory.current",currentDraftId);localStorage.setItem("ocarina.factory.name",currentDraftName);store.set(d.state);$("#historyPanel").classList.remove("open");show("Versión restaurada")};
 
 $("#newBtn").onclick=()=>{
-  const s=store.get(),c=newClient("Nuevo cliente");currentClientId=c.id;
+  const s=store.get(),c=newClient("Nuevo cliente");requestEditorRefresh();currentClientId=c.id;
   const d=saveDraft("Nuevo catálogo",s,"",currentClientId);currentDraftId=d.id;currentDraftName=d.name;currentStatus=STATUS.DRAFT;
   localStorage.setItem("ocarina.factory.current",currentDraftId);localStorage.setItem("ocarina.factory.client",currentClientId);localStorage.setItem("ocarina.factory.name",currentDraftName);
   location.hash="";location.reload();
 };
 $("#duplicateBtn").onclick=()=>{
   if(!currentDraftId){show("Todavía no hay un catálogo para duplicar.");return}
-  const d=duplicateDraft(currentDraftId);if(!d){show("No se pudo duplicar.");return}
+  const d=duplicateDraft(currentDraftId);if(!d){show("No se pudo duplicar.");return}requestEditorRefresh();
   currentDraftId=d.id;currentClientId=d.clientId;currentDraftName=d.name;currentStatus=STATUS.DRAFT;
   localStorage.setItem("ocarina.factory.current",currentDraftId);localStorage.setItem("ocarina.factory.client",currentClientId);localStorage.setItem("ocarina.factory.name",currentDraftName);
   store.set(d.state);show("Catálogo duplicado como nuevo borrador");
@@ -129,7 +168,7 @@ $("#clientNotes").addEventListener("input",e=>{if(syncing)return;const c=client(
 const appearanceMap={theme:"theme",layout:"layout",buttonText:"buttonText"};
 Object.entries(appearanceMap).forEach(([id,key])=>$("#"+id).addEventListener("change",e=>{if(syncing)return;store.patch(s=>{s.appearance[key]=e.target.value;return s})}));
 ["showPrices","showDescriptions","showLocation","showInfo"].forEach(id=>$("#"+id).addEventListener("change",e=>store.patch(s=>{s.appearance[id]=e.target.checked;return s})));
-$("#addProduct").onclick=()=>store.patch(s=>{const p=getPreset(s.presetId);s.products.push({name:"Nuevo producto",price:"",description:"",emoji:p.emojis[s.products.length%p.emojis.length],image:"",featured:false});return s});
+$("#addProduct").onclick=()=>{requestEditorRefresh();store.patch(s=>{const p=getPreset(s.presetId);s.products.push({name:"Nuevo producto",price:"",description:"",emoji:p.emojis[s.products.length%p.emojis.length],image:"",featured:false});return s});
 
 async function publish(){
   const errors=validate(store.get());if(errors.length){show(errors[0]);return}
