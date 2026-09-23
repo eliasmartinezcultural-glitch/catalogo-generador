@@ -113,6 +113,7 @@ function paint(s){
 
   // El catálogo es una proyección independiente del estado y se actualiza siempre.
   renderCatalog(catalog,s);
+  document.documentElement.style.setProperty("--accent",s.business.color);
   renderPresets();
   $("#productCount").textContent=s.products.length+" productos";
   $("#draftName").textContent=currentDraftName||s.business.name||"Nuevo catálogo";
@@ -168,7 +169,14 @@ $("#clientNotes").addEventListener("input",e=>{if(syncing)return;const c=client(
 const appearanceMap={theme:"theme",layout:"layout",buttonText:"buttonText"};
 Object.entries(appearanceMap).forEach(([id,key])=>$("#"+id).addEventListener("change",e=>{if(syncing)return;store.patch(s=>{s.appearance[key]=e.target.value;return s})}));
 ["showPrices","showDescriptions","showLocation","showInfo"].forEach(id=>$("#"+id).addEventListener("change",e=>store.patch(s=>{s.appearance[id]=e.target.checked;return s})));
-$("#addProduct").onclick=()=>{requestEditorRefresh();store.patch(s=>{const p=getPreset(s.presetId);s.products.push({name:"Nuevo producto",price:"",description:"",emoji:p.emojis[s.products.length%p.emojis.length],image:"",featured:false});return s});
+$("#addProduct").onclick=()=>{
+  requestEditorRefresh();
+  store.patch(s=>{
+    const p=getPreset(s.presetId);
+    s.products.push({name:"Nuevo producto",price:"",description:"",emoji:p.emojis[s.products.length%p.emojis.length],image:"",featured:false});
+    return s;
+  });
+};
 
 async function publish(){
   const errors=validate(store.get());if(errors.length){show(errors[0]);return}
