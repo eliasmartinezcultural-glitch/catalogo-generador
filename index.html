@@ -2,9 +2,9 @@
 <html lang="es">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#111214"><meta name="description" content="Fábrica de catálogos digitales rápidos para WhatsApp."><title>Catálogo Express · Fábrica</title><link rel="stylesheet" href="styles.css"></head>
 <body>
-<header class="topbar"><div class="brand"><span class="brand-dot"></span><div><strong>Catálogo Express</strong><small>Fábrica digital · Ocarina Producciones</small></div></div><div class="top-actions"><span id="status" class="status">BORRADOR LOCAL</span><button id="shareTop" class="ghost">Compartir</button></div></header>
+<header class="topbar"><div class="brand"><span class="brand-dot"></span><div><strong>Catálogo Express</strong><small>Fábrica digital · Ocarina Producciones</small></div></div><div class="top-actions"><span id="status" class="status">BORRADOR LOCAL</span><button id="libraryBtn" class="ghost">Mis catálogos</button><button id="shareTop" class="ghost">Compartir</button></div></header>
 <main class="app">
-<section class="intro"><span class="eyebrow">FÁBRICA DE CATÁLOGOS · V4</span><h1>Mucho sistema detrás.<br><em>Muy fácil delante.</em></h1><p>Elegí un estilo, cargá los datos y productos. El sistema optimiza, diseña y prepara el catálogo para compartir.</p></section>
+<section class="factory-bar"><div><strong id="draftName">Nuevo catálogo</strong><small id="autosave">Guardado local automático</small></div><div class="factory-actions"><button id="newBtn">+ Nuevo</button><button id="duplicateBtn">Duplicar</button></div></section><section class="intro"><span class="eyebrow">FÁBRICA DE CATÁLOGOS · V4</span><h1>Mucho sistema detrás.<br><em>Muy fácil delante.</em></h1><p>Elegí un estilo, cargá los datos y productos. El sistema optimiza, diseña y prepara el catálogo para compartir.</p></section>
 <div class="workspace">
 <aside class="editor card">
 <div class="card-head"><div><span class="step">01</span><h2>Negocio</h2></div><span class="live">● EN VIVO</span></div>
@@ -34,4 +34,4 @@
 <p class="hint">Sin cuentas ni base de datos. El catálogo queda contenido en su enlace y funciona como una pieza web independiente.</p>
 </aside>
 <section class="preview-wrap"><div class="preview-meta"><span>VISTA DEL CLIENTE</span><strong>EN VIVO</strong></div><div class="phone"><div class="phone-bar"><span></span><span></span><span></span></div><div id="catalog" class="catalog"></div></div></section>
-</div></main><div id="toast" class="toast"></div><script type="module" src="app.js"></script></body></html>
+</div></main><div id="libraryPanel" class="library-panel"><div class="library-head"><strong>Mis catálogos</strong><button id="closeLibrary">×</button></div><div id="libraryList"></div></div><div id="toast" class="toast"></div><script type="module" src="app.js"></script></body></html>
