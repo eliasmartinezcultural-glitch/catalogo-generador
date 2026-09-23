@@ -13,6 +13,7 @@ let currentDraftName=localStorage.getItem("ocarina.factory.name")||"";
 const presetRoot=$("#presets");
 let syncing=false;
 
+function renderLibrary(){const list=$("#libraryList");const items=library.all();list.innerHTML=items.length?items.map(x=>`<div class="library-item"><div><strong>${x.name}</strong><small>${x.businessName||"Sin nombre"} · ${new Date(x.updatedAt).toLocaleDateString()}</small></div><button data-open="${x.id}">Abrir</button></div>`).join(""):"<p class="empty">Todavía no hay catálogos guardados.</p>"}
 function renderPresets(){
   presetRoot.innerHTML=PRESETS.map(p=>`<button class="preset ${p.id===store.get().presetId?"active":""}" data-preset="${p.id}">
     <strong>${p.name}</strong><small>${p.desc}</small>
@@ -49,13 +50,17 @@ function paint(s){
     feature:i=>store.patch(x=>{x.products[i].featured=!x.products[i].featured;return x})
   });
   renderCatalog(catalog,s);
-  $("#productCount").textContent=s.products.length+" productos";
+  $("#productCount").textContent=s.products.length+" productos";$("#draftName").textContent=currentDraftName||s.business.name||"Nuevo catálogo";$("#autosave").textContent="Guardado local · "+new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
   $("#status").textContent=location.hash?"CATÁLOGO COMPARTIDO":"BORRADOR LOCAL";
   renderPresets();
 }
 store.subscribe(s=>{paint(s);if(!location.hash)saveCurrent(s)});
 
 presetRoot.onclick=e=>{const b=e.target.closest("[data-preset]");if(b)applyPreset(b.dataset.preset)};
+$("#libraryBtn").onclick=()=>{$("#libraryPanel").classList.add("open");renderLibrary()};$("#closeLibrary").onclick=()=>$("#libraryPanel").classList.remove("open");
+$("#libraryList").onclick=e=>{const b=e.target.closest("[data-open]");if(!b)return;const d=library.get(b.dataset.open);if(!d)return;currentDraftId=d.id;currentDraftName=d.name;localStorage.setItem("ocarina.factory.current",currentDraftId);localStorage.setItem("ocarina.factory.name",currentDraftName);store.set(d.state);$("#libraryPanel").classList.remove("open");show("Catálogo abierto")};
+$("#newBtn").onclick=()=>{currentDraftId="";currentDraftName="Nuevo catálogo";localStorage.removeItem("ocarina.factory.current");localStorage.removeItem("ocarina.factory.name");location.hash="";location.reload()};
+$("#duplicateBtn").onclick=()=>{if(!currentDraftId){show("Primero guardá un catálogo.");return}const d=library.duplicate(currentDraftId);if(!d){show("No se pudo duplicar.");return}currentDraftId=d.id;currentDraftName=d.name;localStorage.setItem("ocarina.factory.current",currentDraftId);localStorage.setItem("ocarina.factory.name",currentDraftName);store.set(d.state);show("Catálogo duplicado")};
 
 async function handleImage(file,callback,max){
   try{show("Optimizando imagen…");callback(await compressImage(file,{max,quality:.68}));show("Imagen lista");}
