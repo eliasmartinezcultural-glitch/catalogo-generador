@@ -6,5 +6,5 @@ export const library={
  save(c){const a=read();const i=a.findIndex(x=>x.id===c.id);if(i>=0)a[i]=c;else a.push(c);write(a);return c},
  remove(id){write(read().filter(x=>x.id!==id))},
  get(id){return read().find(x=>x.id===id)||null},
- duplicate(id){const c=read().find(x=>x.id===id);if(!c)return null;const n={...structuredClone(c),id:crypto.randomUUID(),name:c.name+" · copia",updatedAt:Date.now()};a.push(n);write(a);return n}
+ duplicate(id){const c=read().find(x=>x.id===id);if(!c)return null;const n={...structuredClone(c),id:crypto.randomUUID(),name:c.name+" · copia",updatedAt:Date.now()};const a=read();a.push(n);write(a);return n}
 };
