@@ -53,10 +53,10 @@ store.subscribe(paint);
 presetRoot.onclick=e=>{const b=e.target.closest("[data-preset]");if(b)applyPreset(b.dataset.preset)};
 
 async function handleImage(file,callback,max){
-  try{show("Optimizando imagen…");callback(await compressImage(file,{max}));show("Imagen lista");}
+  try{show("Optimizando imagen…");callback(await compressImage(file,{max,quality:.68}));show("Imagen lista");}
   catch(e){show("No pude cargar esa imagen.");}
 }
-$("#logoFile").onchange=e=>handleImage(e.target.files[0],src=>store.patch(s=>{s.business.logo=src;return s}),420);
+$("#logoFile").onchange=e=>handleImage(e.target.files[0],src=>store.patch(s=>{s.business.logo=src;return s}),300);
 
 const businessMap={
   bizName:["business","name"],bizTag:["business","tag"],bizPhone:["business","phone"],
