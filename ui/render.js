@@ -7,7 +7,7 @@ function waUrl(phone,text){const wa=String(phone||"").replace(/\D/g,"");return w
 export function renderEditor(root,state,actions){
   root.innerHTML=state.products.map((p,i)=>'<div class="product-row"><div class="prod-main"><div class="mini-thumb">'+(p.image?'<img src="'+esc(p.image)+'" alt="">':esc(p.emoji))+'</div><div class="prod-fields"><input data-action="name" data-index="'+i+'" value="'+esc(p.name)+'" aria-label="Nombre"><input class="desc-input" data-action="description" data-index="'+i+'" value="'+esc(p.description)+'" placeholder="Descripción breve"></div></div><input data-action="price" data-index="'+i+'" value="'+esc(p.price)+'" aria-label="Precio" inputmode="decimal" placeholder="$"><label class="photo-btn" title="Foto">📷<input type="file" accept="image/*" data-photo="'+i+'"></label><button class="delete" data-action="remove" data-index="'+i+'" aria-label="Eliminar">×</button></div>').join("");
   root.onclick=e=>{const b=e.target.closest("[data-action=remove]");if(b)actions.remove(+b.dataset.index)};
-  root.onchange=e=>{if(e.target.dataset.photo!==undefined){const f=e.target.files[0];if(!f)return;compressImage(f,{max:720,quality:.76}).then(src=>actions.photo(+e.target.dataset.photo,src)).catch(()=>{});}};
+  root.onchange=e=>{if(e.target.dataset.photo!==undefined){const f=e.target.files[0];if(!f)return;compressImage(f,{max:560,quality:.68}).then(src=>actions.photo(+e.target.dataset.photo,src)).catch(()=>{});}};
   root.oninput=e=>{if(e.target.dataset.action&&e.target.dataset.action!=="remove")actions.edit(+e.target.dataset.index,e.target.dataset.action,e.target.value)};
 }
 
