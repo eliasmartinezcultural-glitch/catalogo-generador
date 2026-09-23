@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101114">
+<title>Catálogo Express | Ocarina</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><span class="brand-dot"></span><div><strong>Catálogo Express</strong><small>Ocarina Producciones</small></div></div>
+  <button id="shareTop" class="ghost">Compartir catálogo</button>
+</header>
+<main class="app">
+  <section class="intro">
+    <span class="eyebrow">PRODUCTO DIGITAL EXPRESS</span>
+    <h1>Tu catálogo listo para<br><em>compartir por WhatsApp.</em></h1>
+    <p>Armá una mini tienda en minutos. Sin app, sin registro y sin carrito complicado.</p>
+  </section>
+
+  <div class="workspace">
+    <aside class="editor card">
+      <div class="card-head"><div><span class="step">01</span><h2>Datos del negocio</h2></div><span class="live">● EN VIVO</span></div>
+      <label>Nombre<input id="bizName" value="Almacén La Esquina"></label>
+      <label>Frase<input id="bizTag" value="Productos ricos, atención cercana."></label>
+      <label>WhatsApp<input id="bizPhone" value="2995551234" inputmode="tel"></label>
+      <label>Ubicación<input id="bizAddress" value="San Patricio del Chañar"></label>
+      <label>Color<input id="bizColor" type="color" value="#1f6b52"></label>
+
+      <div class="card-head products-head"><div><span class="step">02</span><h2>Productos</h2></div><button id="addProduct" class="small-btn">+ Agregar</button></div>
+      <div id="productEditor"></div>
+      <button id="shareBtn" class="primary">Crear enlace para compartir →</button>
+      <p class="hint">El enlace guarda los datos en el navegador. No necesitás base de datos para empezar a vender este producto.</p>
+    </aside>
+
+    <section class="preview-wrap">
+      <div class="preview-label">VISTA DEL CLIENTE <span>móvil</span></div>
+      <div class="phone">
+        <div class="phone-bar"><span></span><span></span><span></span></div>
+        <div id="catalog" class="catalog"></div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<div id="toast" class="toast"></div>
+<script src="app.js"></script>
+</body>
+</html>
