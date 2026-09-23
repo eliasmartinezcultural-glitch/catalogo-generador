@@ -10,7 +10,7 @@ function applyPreset(id){const p=getPreset(id);store.patch(s=>{s.presetId=id;s.b
 function fileToData(file,cb){if(!file)return;const reader=new FileReader();reader.onload=()=>cb(reader.result);reader.readAsDataURL(file)}
 let syncing=false;
 function syncForm(s){syncing=true;$("#bizName").value=s.business.name;$("#bizTag").value=s.business.tag;$("#bizPhone").value=s.business.phone;$("#bizAddress").value=s.business.address;$("#bizColor").value=s.business.color;syncing=false;document.documentElement.style.setProperty("--accent",s.business.color)}
-function paint(s){syncForm(s);renderEditor(editor,s,{edit:(i,k,v)=>store.patch(x=>{x.products[i][k]=v;return x}),remove:i=>store.patch(x=>{x.products.splice(i,1);return x})});renderCatalog(catalog,s);$("#productCount").textContent=s.products.length+" productos";$("#status").textContent=location.hash?"CATÁLOGO COMPARTIDO":"BORRADOR LOCAL"}
+function paint(s){syncForm(s);renderEditor(editor,s,{edit:(i,k,v)=>store.patch(x=>{x.products[i][k]=v;return x}),remove:i=>store.patch(x=>{x.products.splice(i,1);return x}),photo:(i,v)=>store.patch(x=>{x.products[i].image=v;return x})});renderCatalog(catalog,s);$("#productCount").textContent=s.products.length+" productos";$("#status").textContent=location.hash?"CATÁLOGO COMPARTIDO":"BORRADOR LOCAL"}
 store.subscribe(s=>{paint(s);renderPresets()});
 presetRoot.onclick=e=>{const b=e.target.closest("[data-preset]");if(b)applyPreset(b.dataset.preset)}
 $("#logoFile").onchange=e=>fileToData(e.target.files[0],src=>store.patch(s=>{s.business.logo=src;return s}));
