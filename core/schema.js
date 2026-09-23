@@ -2,7 +2,7 @@ export const SCHEMA_VERSION=4;
 
 export const LIMITS={
   products:40,name:80,tag:120,address:120,phone:30,price:20,
-  description:180,image:180000,logo:120000,
+  description:180,image:90000,logo:60000,
   hours:120,payment:160,delivery:160,instagram:80,facebook:80
 };
 
