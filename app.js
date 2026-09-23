@@ -59,7 +59,7 @@ store.subscribe(s=>{paint(s);if(!location.hash)saveCurrent(s)});
 presetRoot.onclick=e=>{const b=e.target.closest("[data-preset]");if(b)applyPreset(b.dataset.preset)};
 $("#libraryBtn").onclick=()=>{$("#libraryPanel").classList.add("open");renderLibrary()};$("#closeLibrary").onclick=()=>$("#libraryPanel").classList.remove("open");
 $("#libraryList").onclick=e=>{const b=e.target.closest("[data-open]");if(!b)return;const d=library.get(b.dataset.open);if(!d)return;currentDraftId=d.id;currentDraftName=d.name;localStorage.setItem("ocarina.factory.current",currentDraftId);localStorage.setItem("ocarina.factory.name",currentDraftName);store.set(d.state);$("#libraryPanel").classList.remove("open");show("Catálogo abierto")};
-$("#newBtn").onclick=()=>{currentDraftId="";currentDraftName="Nuevo catálogo";localStorage.removeItem("ocarina.factory.current");localStorage.removeItem("ocarina.factory.name");location.hash="";location.reload()};
+$("#newBtn").onclick=()=>{currentDraftId="";currentDraftName="Nuevo catálogo";localStorage.removeItem("ocarina.factory.current");localStorage.removeItem("ocarina.factory.name");localStorage.removeItem("ocarina.catalog.v2");location.hash="";location.reload()};
 $("#duplicateBtn").onclick=()=>{if(!currentDraftId){show("Primero guardá un catálogo.");return}const d=library.duplicate(currentDraftId);if(!d){show("No se pudo duplicar.");return}currentDraftId=d.id;currentDraftName=d.name;localStorage.setItem("ocarina.factory.current",currentDraftId);localStorage.setItem("ocarina.factory.name",currentDraftName);store.set(d.state);show("Catálogo duplicado")};
 
 async function handleImage(file,callback,max){
